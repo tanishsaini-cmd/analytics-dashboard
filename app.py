@@ -6,21 +6,25 @@ st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 
 st.title("🚗 Vehicle Telemetry Analytics Dashboard")
 
-uploaded_file = st.file_uploader("Upload Excel or CSV file", type=["xlsx", "csv"])
+# SIDEBAR FILE UPLOAD
+st.sidebar.header("Upload Data")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Drag and drop Excel or CSV file",
+    type=["xlsx", "csv"]
+)
 
 if uploaded_file is not None:
 
-    # Read file safely
     try:
         if uploaded_file.name.endswith(".csv"):
             df = pd.read_csv(uploaded_file)
         else:
             df = pd.read_excel(uploaded_file)
-    except Exception as e:
+    except:
         st.error("File could not be read.")
         st.stop()
 
-    # Required columns
     required_cols = [
         "createdAt",
         "battery_state_of_charge",
@@ -34,20 +38,16 @@ if uploaded_file is not None:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
 
-    # Convert date column
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
-    # Filter vehicle status = 2
     df_filtered = df[df["controller_vehicle_status"] == 2]
 
     if df_filtered.empty:
         st.warning("No data where controller_vehicle_status = 2")
         st.stop()
 
-    # Sort by time
     df_filtered = df_filtered.sort_values("createdAt")
 
-    # KPI Metrics
     st.subheader("Key Metrics")
 
     col1, col2, col3 = st.columns(3)
@@ -58,12 +58,10 @@ if uploaded_file is not None:
 
     st.divider()
 
-    # Dual Axis Chart
     st.subheader("SOC and Odometer Trend")
 
     fig = go.Figure()
 
-    # SOC Line
     fig.add_trace(
         go.Scatter(
             x=df_filtered["createdAt"],
@@ -74,7 +72,6 @@ if uploaded_file is not None:
         )
     )
 
-    # Odometer Line
     fig.add_trace(
         go.Scatter(
             x=df_filtered["createdAt"],
@@ -87,16 +84,12 @@ if uploaded_file is not None:
 
     fig.update_layout(
         xaxis=dict(title="Time"),
-        yaxis=dict(
-            title="Battery SOC (%)",
-            side="left"
-        ),
+        yaxis=dict(title="SOC (%)"),
         yaxis2=dict(
             title="Odometer",
             overlaying="y",
             side="right"
         ),
-        legend=dict(x=0.01, y=0.99),
         height=500
     )
 
