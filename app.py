@@ -20,9 +20,6 @@ if uploaded_file is not None:
         st.error("File could not be read.")
         st.stop()
 
-    st.subheader("Raw Data Preview")
-    st.dataframe(df.head())
-
     # Required columns
     required_cols = [
         "createdAt",
@@ -37,7 +34,7 @@ if uploaded_file is not None:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
 
-    # Convert time column
+    # Convert date column
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
     # Filter vehicle status = 2
@@ -61,7 +58,7 @@ if uploaded_file is not None:
 
     st.divider()
 
-    # Single Chart with Dual Axis
+    # Dual Axis Chart
     st.subheader("SOC and Odometer Trend")
 
     fig = go.Figure()
@@ -104,9 +101,3 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
-
-    st.subheader("Filtered Data Table")
-    st.dataframe(df_filtered)
-                 
