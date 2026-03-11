@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 
-st.title("🚗 Vehicle Telemetry Analytics Dashboard")
+st.title("Vehicle Telemetry Analytics Dashboard")
 
 # Sidebar uploader (top-left)
 st.sidebar.header("Upload Telemetry File")
@@ -109,3 +109,4 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
