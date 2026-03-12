@@ -42,32 +42,43 @@ if uploaded_files:
 
     df = pd.concat(dataframes, ignore_index=True)
 
+    # Convert datetime
+    if "createdat" in df.columns:
+        df["createdat"] = pd.to_datetime(df["createdat"], errors="coerce")
+    else:
+        st.error("createdAt column not found")
+        st.stop()
+
+    # Smart filtering logic
+    if "controllervehiclestatus" in df.columns:
+        df_filtered = df[df["controllervehiclestatus"] == 1]
+
+    elif "vehiclestate" in df.columns:
+        df_filtered = df[df["vehiclestate"] == 2]
+
+    else:
+        st.error("Neither controller_vehicle_status nor vehicleState column found")
+        st.stop()
+
+    if df_filtered.empty:
+        st.warning("No matching records after filtering")
+        st.stop()
+
+    df_filtered = df_filtered.sort_values("createdat")
+
+    # Required analytics columns
     required_cols = [
-        "createdat",
         "batterystateofcharge",
         "vehiclecalculatedodo",
-        "controllervehiclestatus",
         "controllerspeed",
         "batterycurrent"
     ]
 
-    missing_cols = [col for col in required_cols if col not in df.columns]
+    missing_cols = [col for col in required_cols if col not in df_filtered.columns]
 
     if missing_cols:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
-
-    # Convert datetime
-    df["createdat"] = pd.to_datetime(df["createdat"], errors="coerce")
-
-    # Filter status = 1
-    df_filtered = df[df["controllervehiclestatus"] == 1]
-
-    if df_filtered.empty:
-        st.warning("No records where controller_vehicle_status = 1")
-        st.stop()
-
-    df_filtered = df_filtered.sort_values("createdat")
 
     # SOC calculations
     start_soc = df_filtered["batterystateofcharge"].iloc[0]
@@ -174,6 +185,3 @@ if uploaded_files:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
-
-
-
