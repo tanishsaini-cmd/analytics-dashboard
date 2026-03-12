@@ -30,7 +30,8 @@ if uploaded_file is not None:
         "battery_state_of_charge",
         "vehicle_calculated_odo",
         "controller_vehicle_status",
-        "controller_speed"
+        "controller_speed",
+        "battery_current"
     ]
 
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -41,10 +42,10 @@ if uploaded_file is not None:
 
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
-    df_filtered = df[df["controller_vehicle_status"] == 1]
+    df_filtered = df[df["controller_vehicle_status"] == 2]
 
     if df_filtered.empty:
-        st.warning("No records where controller_vehicle_status = 1")
+        st.warning("No records where controller_vehicle_status = 2")
         st.stop()
 
     df_filtered = df_filtered.sort_values("createdAt")
@@ -59,15 +60,19 @@ if uploaded_file is not None:
     end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
     vehicle_drive = round(end_odo - start_odo, 2)
 
+    # Average current
+    avg_amp = round(df_filtered["battery_current"].abs().mean(), 2)
+
     st.subheader("Key Metrics")
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
 
     col1.metric("Total Records", len(df_filtered))
     col2.metric("SOC Consumed (%)", soc_consumed)
     col3.metric("Start ODO", start_odo)
     col4.metric("End ODO", end_odo)
     col5.metric("Vehicle Drive (km)", vehicle_drive)
+    col6.metric("Average Current (A)", avg_amp)
 
     st.divider()
 
@@ -148,4 +153,3 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
-
