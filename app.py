@@ -43,7 +43,7 @@ if uploaded_file is not None:
     # Convert datetime
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
-    # FILTER VEHICLE STATUS = 1
+    # Filter controller_vehicle_status = 1
     df_filtered = df[df["controller_vehicle_status"] == 1]
 
     if df_filtered.empty:
@@ -63,8 +63,8 @@ if uploaded_file is not None:
 
     vehicle_drive = round(end_odo - start_odo, 2)
 
-    # Average current
-   avg_amp = round(df_filtered["battery_current"].mean(), 2)
+    # Average battery current (keep negative value)
+    avg_amp = round(df_filtered["battery_current"].mean(), 2)
 
     st.subheader("Key Metrics")
 
@@ -156,4 +156,3 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
-
