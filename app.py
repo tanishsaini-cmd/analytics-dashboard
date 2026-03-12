@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 
-st.title(" Vehicle Telemetry Analytics Dashboard")
+st.title("🚗 Vehicle Telemetry Analytics Dashboard")
 
 # Sidebar uploader
 st.sidebar.header("Upload Telemetry File")
@@ -29,7 +29,8 @@ if uploaded_file is not None:
         "createdAt",
         "battery_state_of_charge",
         "vehicle_calculated_odo",
-        "controller_vehicle_status"
+        "controller_vehicle_status",
+        "controller_speed"
     ]
 
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -56,7 +57,6 @@ if uploaded_file is not None:
     # ODO calculations
     start_odo = round(df_filtered["vehicle_calculated_odo"].iloc[0], 2)
     end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
-
     vehicle_drive = round(end_odo - start_odo, 2)
 
     st.subheader("Key Metrics")
@@ -71,11 +71,12 @@ if uploaded_file is not None:
 
     st.divider()
 
+    # Chart 1: SOC vs ODO
     st.subheader("SOC and Odometer Trend")
 
-    fig = go.Figure()
+    fig1 = go.Figure()
 
-    fig.add_trace(
+    fig1.add_trace(
         go.Scatter(
             x=df_filtered["createdAt"],
             y=df_filtered["battery_state_of_charge"],
@@ -85,7 +86,7 @@ if uploaded_file is not None:
         )
     )
 
-    fig.add_trace(
+    fig1.add_trace(
         go.Scatter(
             x=df_filtered["createdAt"],
             y=df_filtered["vehicle_calculated_odo"],
@@ -95,20 +96,39 @@ if uploaded_file is not None:
         )
     )
 
-    fig.update_layout(
+    fig1.update_layout(
         xaxis=dict(title="Time"),
-        yaxis=dict(
-            title="SOC (%)",
-            side="left"
-        ),
+        yaxis=dict(title="SOC (%)"),
         yaxis2=dict(
             title="Odometer",
             overlaying="y",
             side="right"
         ),
-        legend=dict(x=0.01, y=0.99),
         height=500
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
+    st.divider()
+
+    # Chart 2: Speed vs ODO
+    st.subheader("Vehicle Speed vs Odometer")
+
+    fig2 = go.Figure()
+
+    fig2.add_trace(
+        go.Scatter(
+            x=df_filtered["vehicle_calculated_odo"],
+            y=df_filtered["controller_speed"],
+            mode="lines",
+            name="Speed"
+        )
+    )
+
+    fig2.update_layout(
+        xaxis_title="Odometer (km)",
+        yaxis_title="Controller Speed",
+        height=500
+    )
+
+    st.plotly_chart(fig2, use_container_width=True)
