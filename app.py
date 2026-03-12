@@ -71,7 +71,7 @@ if uploaded_file is not None:
 
     st.divider()
 
-    # Chart 1: SOC vs ODO
+    # Chart 1: SOC & ODO vs Time
     st.subheader("SOC and Odometer Trend")
 
     fig1 = go.Figure()
@@ -111,23 +111,39 @@ if uploaded_file is not None:
 
     st.divider()
 
-    # Chart 2: Speed vs ODO
-    st.subheader("Vehicle Speed vs Odometer")
+    # Chart 2: Speed & ODO vs Time
+    st.subheader("Vehicle Speed and Odometer Over Time")
 
     fig2 = go.Figure()
 
     fig2.add_trace(
         go.Scatter(
-            x=df_filtered["vehicle_calculated_odo"],
+            x=df_filtered["createdAt"],
             y=df_filtered["controller_speed"],
-            mode="lines",
-            name="Speed"
+            name="Speed",
+            yaxis="y1",
+            mode="lines"
+        )
+    )
+
+    fig2.add_trace(
+        go.Scatter(
+            x=df_filtered["createdAt"],
+            y=df_filtered["vehicle_calculated_odo"],
+            name="Odometer",
+            yaxis="y2",
+            mode="lines"
         )
     )
 
     fig2.update_layout(
-        xaxis_title="Odometer (km)",
-        yaxis_title="Controller Speed",
+        xaxis=dict(title="Time"),
+        yaxis=dict(title="Speed"),
+        yaxis2=dict(
+            title="Odometer",
+            overlaying="y",
+            side="right"
+        ),
         height=500
     )
 
