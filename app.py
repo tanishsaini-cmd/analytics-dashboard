@@ -40,8 +40,10 @@ if uploaded_file is not None:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
 
+    # Convert datetime
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
+    # FILTER VEHICLE STATUS = 1
     df_filtered = df[df["controller_vehicle_status"] == 1]
 
     if df_filtered.empty:
@@ -58,6 +60,7 @@ if uploaded_file is not None:
     # ODO calculations
     start_odo = round(df_filtered["vehicle_calculated_odo"].iloc[0], 2)
     end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
+
     vehicle_drive = round(end_odo - start_odo, 2)
 
     # Average current
