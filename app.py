@@ -4,9 +4,8 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 
-st.title(" Vehicle Telemetry Analytics Dashboard")
+st.title("🚗 Vehicle Telemetry Analytics Dashboard")
 
-# Sidebar uploader
 st.sidebar.header("Upload Telemetry Files")
 
 uploaded_files = st.sidebar.file_uploader(
@@ -20,11 +19,20 @@ if uploaded_files:
     dataframes = []
 
     for file in uploaded_files:
+
         try:
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
             else:
                 df = pd.read_excel(file)
+
+            # Normalize column names
+            df.columns = (
+                df.columns
+                .str.lower()
+                .str.replace(" ", "", regex=False)
+                .str.replace("_", "", regex=False)
+            )
 
             dataframes.append(df)
 
@@ -32,16 +40,15 @@ if uploaded_files:
             st.error(f"File could not be read: {file.name}")
             st.stop()
 
-    # Combine all uploaded files
     df = pd.concat(dataframes, ignore_index=True)
 
     required_cols = [
-        "createdAt",
-        "battery_state_of_charge",
-        "vehicle_calculated_odo",
-        "controller_vehicle_status",
-        "controller_speed",
-        "battery_current"
+        "createdat",
+        "batterystateofcharge",
+        "vehiclecalculatedodo",
+        "controllervehiclestatus",
+        "controllerspeed",
+        "batterycurrent"
     ]
 
     missing_cols = [col for col in required_cols if col not in df.columns]
@@ -51,31 +58,31 @@ if uploaded_files:
         st.stop()
 
     # Convert datetime
-    df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
+    df["createdat"] = pd.to_datetime(df["createdat"], errors="coerce")
 
-    # Filter controller_vehicle_status = 1
-    df_filtered = df[df["controller_vehicle_status"] == 1]
+    # Filter status = 1
+    df_filtered = df[df["controllervehiclestatus"] == 1]
 
     if df_filtered.empty:
         st.warning("No records where controller_vehicle_status = 1")
         st.stop()
 
-    # Sort by time automatically
-    df_filtered = df_filtered.sort_values("createdAt")
+    df_filtered = df_filtered.sort_values("createdat")
 
     # SOC calculations
-    start_soc = df_filtered["battery_state_of_charge"].iloc[0]
-    end_soc = df_filtered["battery_state_of_charge"].iloc[-1]
+    start_soc = df_filtered["batterystateofcharge"].iloc[0]
+    end_soc = df_filtered["batterystateofcharge"].iloc[-1]
+
     soc_consumed = round(start_soc - end_soc, 2)
 
     # ODO calculations
-    start_odo = round(df_filtered["vehicle_calculated_odo"].iloc[0], 2)
-    end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
+    start_odo = round(df_filtered["vehiclecalculatedodo"].iloc[0], 2)
+    end_odo = round(df_filtered["vehiclecalculatedodo"].iloc[-1], 2)
 
     vehicle_drive = round(end_odo - start_odo, 2)
 
-    # Average battery current (keep negative value)
-    avg_amp = round(df_filtered["battery_current"].mean(), 2)
+    # Average current
+    avg_amp = round(df_filtered["batterycurrent"].mean(), 2)
 
     st.subheader("Key Metrics")
 
@@ -90,15 +97,15 @@ if uploaded_files:
 
     st.divider()
 
-    # Chart 1: SOC & ODO vs Time
+    # Chart 1
     st.subheader("SOC and Odometer Trend")
 
     fig1 = go.Figure()
 
     fig1.add_trace(
         go.Scatter(
-            x=df_filtered["createdAt"],
-            y=df_filtered["battery_state_of_charge"],
+            x=df_filtered["createdat"],
+            y=df_filtered["batterystateofcharge"],
             name="SOC (%)",
             yaxis="y1",
             mode="lines"
@@ -107,8 +114,8 @@ if uploaded_files:
 
     fig1.add_trace(
         go.Scatter(
-            x=df_filtered["createdAt"],
-            y=df_filtered["vehicle_calculated_odo"],
+            x=df_filtered["createdat"],
+            y=df_filtered["vehiclecalculatedodo"],
             name="Odometer",
             yaxis="y2",
             mode="lines"
@@ -130,15 +137,15 @@ if uploaded_files:
 
     st.divider()
 
-    # Chart 2: Speed & ODO vs Time
+    # Chart 2
     st.subheader("Vehicle Speed and Odometer Over Time")
 
     fig2 = go.Figure()
 
     fig2.add_trace(
         go.Scatter(
-            x=df_filtered["createdAt"],
-            y=df_filtered["controller_speed"],
+            x=df_filtered["createdat"],
+            y=df_filtered["controllerspeed"],
             name="Speed",
             yaxis="y1",
             mode="lines"
@@ -147,8 +154,8 @@ if uploaded_files:
 
     fig2.add_trace(
         go.Scatter(
-            x=df_filtered["createdAt"],
-            y=df_filtered["vehicle_calculated_odo"],
+            x=df_filtered["createdat"],
+            y=df_filtered["vehiclecalculatedodo"],
             name="Odometer",
             yaxis="y2",
             mode="lines"
@@ -167,4 +174,3 @@ if uploaded_files:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
-
