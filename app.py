@@ -41,10 +41,10 @@ if uploaded_file is not None:
 
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
-    df_filtered = df[df["controller_vehicle_status"] == 2]
+    df_filtered = df[df["controller_vehicle_status"] == 1]
 
     if df_filtered.empty:
-        st.warning("No records where controller_vehicle_status = 2")
+        st.warning("No records where controller_vehicle_status = 1")
         st.stop()
 
     df_filtered = df_filtered.sort_values("createdAt")
@@ -148,3 +148,4 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
+
