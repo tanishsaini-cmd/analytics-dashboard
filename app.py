@@ -48,7 +48,7 @@ if uploaded_file is not None:
 
     df_filtered = df_filtered.sort_values("createdAt")
 
-    # SOC calculation
+    # SOC calculations
     start_soc = df_filtered["battery_state_of_charge"].iloc[0]
     end_soc = df_filtered["battery_state_of_charge"].iloc[-1]
     soc_consumed = round(start_soc - end_soc, 2)
@@ -56,7 +56,8 @@ if uploaded_file is not None:
     # ODO calculations
     start_odo = round(df_filtered["vehicle_calculated_odo"].iloc[0], 2)
     end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
-    max_odo = round(df_filtered["vehicle_calculated_odo"].max(), 2)
+
+    vehicle_drive = round(end_odo - start_odo, 2)
 
     st.subheader("Key Metrics")
 
@@ -66,7 +67,7 @@ if uploaded_file is not None:
     col2.metric("SOC Consumed (%)", soc_consumed)
     col3.metric("Start ODO", start_odo)
     col4.metric("End ODO", end_odo)
-    col5.metric("Max ODO", max_odo)
+    col5.metric("Vehicle Drive (km)", vehicle_drive)
 
     st.divider()
 
