@@ -7,23 +7,33 @@ st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 st.title("🚗 Vehicle Telemetry Analytics Dashboard")
 
 # Sidebar uploader
-st.sidebar.header("Upload Telemetry File")
+st.sidebar.header("Upload Telemetry Files")
 
-uploaded_file = st.sidebar.file_uploader(
-    "Drag and drop Excel or CSV file",
-    type=["xlsx", "csv"]
+uploaded_files = st.sidebar.file_uploader(
+    "Drag and drop Excel or CSV files",
+    type=["xlsx", "csv"],
+    accept_multiple_files=True
 )
 
-if uploaded_file is not None:
+if uploaded_files:
 
-    try:
-        if uploaded_file.name.endswith(".csv"):
-            df = pd.read_csv(uploaded_file)
-        else:
-            df = pd.read_excel(uploaded_file)
-    except:
-        st.error("File could not be read.")
-        st.stop()
+    dataframes = []
+
+    for file in uploaded_files:
+        try:
+            if file.name.endswith(".csv"):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+
+            dataframes.append(df)
+
+        except:
+            st.error(f"File could not be read: {file.name}")
+            st.stop()
+
+    # Combine all uploaded files
+    df = pd.concat(dataframes, ignore_index=True)
 
     required_cols = [
         "createdAt",
@@ -50,6 +60,7 @@ if uploaded_file is not None:
         st.warning("No records where controller_vehicle_status = 1")
         st.stop()
 
+    # Sort by time automatically
     df_filtered = df_filtered.sort_values("createdAt")
 
     # SOC calculations
