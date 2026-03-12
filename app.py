@@ -54,7 +54,7 @@ if uploaded_files:
         df_filtered = df[df["controllervehiclestatus"] == 1]
 
     elif "vehiclestate" in df.columns:
-        df_filtered = df[df["vehiclestate"] == 2]
+        df_filtered = df[df["vehiclestate"] == 1]
 
     else:
         st.error("Neither controller_vehicle_status nor vehicleState column found")
@@ -185,3 +185,4 @@ if uploaded_files:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
+
