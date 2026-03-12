@@ -4,9 +4,9 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Vehicle Telemetry Dashboard", layout="wide")
 
-st.title("Vehicle Telemetry Analytics Dashboard")
+st.title("🚗 Vehicle Telemetry Analytics Dashboard")
 
-# Sidebar uploader (top-left)
+# Sidebar uploader
 st.sidebar.header("Upload Telemetry File")
 
 uploaded_file = st.sidebar.file_uploader(
@@ -25,7 +25,6 @@ if uploaded_file is not None:
         st.error("File could not be read.")
         st.stop()
 
-    # Required columns
     required_cols = [
         "createdAt",
         "battery_state_of_charge",
@@ -39,10 +38,8 @@ if uploaded_file is not None:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
 
-    # Convert datetime
     df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce")
 
-    # Filter only running vehicle
     df_filtered = df[df["controller_vehicle_status"] == 2]
 
     if df_filtered.empty:
@@ -51,24 +48,28 @@ if uploaded_file is not None:
 
     df_filtered = df_filtered.sort_values("createdAt")
 
-    # SOC consumed calculation
+    # SOC calculation
     start_soc = df_filtered["battery_state_of_charge"].iloc[0]
     end_soc = df_filtered["battery_state_of_charge"].iloc[-1]
-
     soc_consumed = round(start_soc - end_soc, 2)
 
-    # Metrics
+    # ODO calculations
+    start_odo = round(df_filtered["vehicle_calculated_odo"].iloc[0], 2)
+    end_odo = round(df_filtered["vehicle_calculated_odo"].iloc[-1], 2)
+    max_odo = round(df_filtered["vehicle_calculated_odo"].max(), 2)
+
     st.subheader("Key Metrics")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     col1.metric("Total Records", len(df_filtered))
     col2.metric("SOC Consumed (%)", soc_consumed)
-    col3.metric("Max Odometer", round(df_filtered["vehicle_calculated_odo"].max(), 2))
+    col3.metric("Start ODO", start_odo)
+    col4.metric("End ODO", end_odo)
+    col5.metric("Max ODO", max_odo)
 
     st.divider()
 
-    # Dual-axis chart
     st.subheader("SOC and Odometer Trend")
 
     fig = go.Figure()
@@ -109,4 +110,3 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
