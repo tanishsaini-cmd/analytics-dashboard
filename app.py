@@ -64,7 +64,7 @@ if uploaded_file is not None:
     vehicle_drive = round(end_odo - start_odo, 2)
 
     # Average current
-    avg_amp = round(df_filtered["battery_current"].abs().mean(), 2)
+   avg_amp = round(df_filtered["battery_current"].mean(), 2)
 
     st.subheader("Key Metrics")
 
@@ -156,3 +156,4 @@ if uploaded_file is not None:
     )
 
     st.plotly_chart(fig2, use_container_width=True)
+
