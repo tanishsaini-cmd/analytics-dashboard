@@ -51,10 +51,10 @@ if uploaded_files:
 
     # Smart filtering logic
     if "controllervehiclestatus" in df.columns:
-        df_filtered = df[df["controllervehiclestatus"] == 1]
+        df_filtered = df[df["controllervehiclestatus"] == 2]
 
     elif "vehiclestate" in df.columns:
-        df_filtered = df[df["vehiclestate"] == 1]
+        df_filtered = df[df["vehiclestate"] == 2]
 
     else:
         st.error("Neither controller_vehicle_status nor vehicleState column found")
