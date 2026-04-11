@@ -19,7 +19,6 @@ if uploaded_files:
     dataframes = []
 
     for file in uploaded_files:
-
         try:
             if file.name.endswith(".csv"):
                 df = pd.read_csv(file)
@@ -42,31 +41,47 @@ if uploaded_files:
 
     df = pd.concat(dataframes, ignore_index=True)
 
-    # Convert datetime
+    # ==============================
+    # ⏱ Convert datetime
+    # ==============================
     if "createdat" in df.columns:
         df["createdat"] = pd.to_datetime(df["createdat"], errors="coerce")
     else:
         st.error("createdAt column not found")
         st.stop()
 
-    # Smart filtering logic
+    # Sort full dataset first
+    df = df.sort_values("createdat")
+
+    # ==============================
+    # 🚦 Detect status column
+    # ==============================
     if "controllervehiclestatus" in df.columns:
-        df_filtered = df[df["controllervehiclestatus"] == 2]
-
+        status_col = "controllervehiclestatus"
     elif "vehiclestate" in df.columns:
-        df_filtered = df[df["vehiclestate"] == 2]
-
+        status_col = "vehiclestate"
     else:
-        st.error("Neither controller_vehicle_status nor vehicleState column found")
+        st.error("No vehicle status column found")
         st.stop()
 
-    if df_filtered.empty:
-        st.warning("No matching records after filtering")
+    # ==============================
+    # 🎯 Find FIRST & LAST state = 2
+    # ==============================
+    state_2_df = df[df[status_col] == 2]
+
+    if state_2_df.empty:
+        st.warning("No vehicleState = 2 found")
         st.stop()
 
-    # Sort and clean
-    df_filtered = df_filtered.sort_values("createdat")
+    first_index = state_2_df.index[0]
+    last_index = state_2_df.index[-1]
 
+    # Slice continuous data
+    df_filtered = df.loc[first_index:last_index].copy()
+
+    # ==============================
+    # 🧹 Clean required columns
+    # ==============================
     required_cols = [
         "batterystateofcharge",
         "vehiclecalculatedodo",
@@ -83,6 +98,10 @@ if uploaded_files:
     # Drop null ODO
     df_filtered = df_filtered.dropna(subset=["vehiclecalculatedodo"])
 
+    if df_filtered.empty:
+        st.warning("No valid ODO data")
+        st.stop()
+
     # ==============================
     # 🔋 SOC Calculations
     # ==============================
@@ -91,27 +110,25 @@ if uploaded_files:
     soc_consumed = round(start_soc - end_soc, 2)
 
     # ==============================
-    # 🚗 ODO Calculations (ROBUST)
+    # 🚗 ODO Calculations (CORE LOGIC)
     # ==============================
     start_odo = df_filtered["vehiclecalculatedodo"].iloc[0]
     end_odo = df_filtered["vehiclecalculatedodo"].iloc[-1]
 
-    # Method 1: Basic
     basic_distance = end_odo - start_odo
 
-    # Method 2: Smart (handles resets/jumps)
+    # Smart diff method (handles reset/jumps)
     df_filtered["odo_diff"] = df_filtered["vehiclecalculatedodo"].diff()
-
     smart_distance = df_filtered[df_filtered["odo_diff"] > 0]["odo_diff"].sum()
 
-    # Choose best method
+    # Choose best
     if basic_distance < 0:
         st.warning("⚠️ Odometer reset detected → Using smart calculation")
         vehicle_drive = smart_distance
     else:
         vehicle_drive = basic_distance
 
-    # Round values
+    # Round
     start_odo = round(start_odo, 2)
     end_odo = round(end_odo, 2)
     vehicle_drive = round(vehicle_drive, 2)
