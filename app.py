@@ -64,9 +64,9 @@ if uploaded_files:
         st.warning("No matching records after filtering")
         st.stop()
 
+    # Sort and clean
     df_filtered = df_filtered.sort_values("createdat")
 
-    # Required analytics columns
     required_cols = [
         "batterystateofcharge",
         "vehiclecalculatedodo",
@@ -80,21 +80,50 @@ if uploaded_files:
         st.error(f"Missing columns: {missing_cols}")
         st.stop()
 
-    # SOC calculations
+    # Drop null ODO
+    df_filtered = df_filtered.dropna(subset=["vehiclecalculatedodo"])
+
+    # ==============================
+    # 🔋 SOC Calculations
+    # ==============================
     start_soc = df_filtered["batterystateofcharge"].iloc[0]
     end_soc = df_filtered["batterystateofcharge"].iloc[-1]
-
     soc_consumed = round(start_soc - end_soc, 2)
 
-    # ODO calculations
-    start_odo = round(df_filtered["vehiclecalculatedodo"].iloc[0], 2)
-    end_odo = round(df_filtered["vehiclecalculatedodo"].iloc[-1], 2)
+    # ==============================
+    # 🚗 ODO Calculations (ROBUST)
+    # ==============================
+    start_odo = df_filtered["vehiclecalculatedodo"].iloc[0]
+    end_odo = df_filtered["vehiclecalculatedodo"].iloc[-1]
 
-    vehicle_drive = round(end_odo - start_odo, 2)
+    # Method 1: Basic
+    basic_distance = end_odo - start_odo
 
-    # Average current
+    # Method 2: Smart (handles resets/jumps)
+    df_filtered["odo_diff"] = df_filtered["vehiclecalculatedodo"].diff()
+
+    smart_distance = df_filtered[df_filtered["odo_diff"] > 0]["odo_diff"].sum()
+
+    # Choose best method
+    if basic_distance < 0:
+        st.warning("⚠️ Odometer reset detected → Using smart calculation")
+        vehicle_drive = smart_distance
+    else:
+        vehicle_drive = basic_distance
+
+    # Round values
+    start_odo = round(start_odo, 2)
+    end_odo = round(end_odo, 2)
+    vehicle_drive = round(vehicle_drive, 2)
+
+    # ==============================
+    # ⚡ Current
+    # ==============================
     avg_amp = round(df_filtered["batterycurrent"].mean(), 2)
 
+    # ==============================
+    # 📊 Metrics UI
+    # ==============================
     st.subheader("Key Metrics")
 
     col1, col2, col3, col4, col5, col6 = st.columns(6)
@@ -108,7 +137,9 @@ if uploaded_files:
 
     st.divider()
 
-    # Chart 1
+    # ==============================
+    # 📈 Chart 1: SOC + ODO
+    # ==============================
     st.subheader("SOC and Odometer Trend")
 
     fig1 = go.Figure()
@@ -148,7 +179,9 @@ if uploaded_files:
 
     st.divider()
 
-    # Chart 2
+    # ==============================
+    # 📈 Chart 2: Speed + ODO
+    # ==============================
     st.subheader("Vehicle Speed and Odometer Over Time")
 
     fig2 = go.Figure()
@@ -186,3 +219,5 @@ if uploaded_files:
 
     st.plotly_chart(fig2, use_container_width=True)
 
+else:
+    st.info("👈 Upload telemetry files to get started")
